@@ -1,0 +1,58 @@
+#!/bin/bash
+
+if ( [ ${1} = '-q' ] || [ ${1} = '--quiet' ] ) && [ ${#} -eq 3 ]; then
+    for tn in `cat ${2}`; do
+    i=${tn}.in
+    o=${tn}.out
+    if [ ! -r $i ] || [ ! -f $i ]; then
+	echo $i does not exist or is not readable >&2
+	exit 2
+    fi
+    if [ ! -r $o ] || [ ! -f $o ]; then
+	echo $o does not exist or is not readable >&2
+	exit 2
+    fi
+    tf=`mktemp`
+    ${3} < $i > $tf
+    cmp -s $o $tf
+    if [ ${?} -ne 0 ]; then
+	echo Test failed: $tn
+    fi
+    rm $tf
+    done
+    exit 3
+fi
+if [ ${#} -ne 2 ]; then
+    echo Incorrect Number of Arguments: ${0} >&2
+    echo Expected Number of Arguments: 2 >&2
+    echo Actual Number of Arguments: ${#} >&2
+    exit 1
+fi
+for test_name in `cat ${1}`; do
+    input=${test_name}.in
+    output=${test_name}.out
+    if [ ! -r $input ] || [ ! -f $input ]; then
+	echo $input does not exist or is not readable >&2
+	exit 2
+    fi
+    if [ ! -r $output ] || [ ! -f $output ]; then
+	echo $output does not exist or is not readable >&2
+	exit 2
+    fi
+    temp_file=`mktemp`
+    ${2} < $input > $temp_file
+    cmp -s $temp_file $output
+    if [ ${?} -ne 0 ]; then
+	echo Test failed: $test_name
+	echo Input:
+	cat $input
+	echo Expected:
+	cat $output
+	echo Actual:
+	cat $temp_file
+    fi
+    rm $temp_file
+done
+
+
+
